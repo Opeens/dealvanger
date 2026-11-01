@@ -1,6 +1,7 @@
 import { getDb } from '@/lib/db';
 import { getUser } from '@/lib/session';
 import { parseFilter, FILTER_FIELDS } from '@/lib/filters';
+import { scanDue } from '@/lib/scanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,7 @@ export async function PUT(req, { params }) {
   });
   if (!res.rowsAffected) return Response.json({ error: 'Filter niet gevonden' }, { status: 404 });
   await db.execute({ sql: 'DELETE FROM seen WHERE filter_id = ?', args: [id] });
+  await scanDue(db, { userId: user.id, timeBudgetMs: 8000, limit: 3 }).catch(e => console.error('Scan na wijzigen mislukt', e));
   return Response.json({ ok: true });
 }
 

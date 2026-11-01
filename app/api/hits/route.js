@@ -1,5 +1,6 @@
 import { getDb, rows } from '@/lib/db';
 import { getUser } from '@/lib/session';
+import { scanDue } from '@/lib/scanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,9 @@ export async function GET() {
   const user = await getUser();
   if (!user) return Response.json({ error: 'Niet ingelogd' }, { status: 401 });
   const db = await getDb();
+  // zolang het dashboard openstaat scannen we de filters van deze gebruiker die aan de beurt zijn,
+  // zodat de site ook werkt als de externe cron even niet draait
+  await scanDue(db, { userId: user.id, timeBudgetMs: 8000, limit: 5 }).catch(e => console.error('Dashboard-scan mislukt', e));
   const hits = rows(await db.execute({
     sql: `SELECT h.*, f.name AS filter_name FROM hits h JOIN filters f ON f.id = h.filter_id
           WHERE h.user_id = ? ORDER BY h.id DESC LIMIT 200`,

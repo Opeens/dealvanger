@@ -3,6 +3,7 @@ import { getDb, rows } from '@/lib/db';
 import { getUser } from '@/lib/session';
 import { parseFilter, FILTER_FIELDS } from '@/lib/filters';
 import { MAX_FILTERS_PER_USER } from '@/lib/config';
+import { scanDue } from '@/lib/scanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,5 +34,7 @@ export async function POST(req) {
     sql: `INSERT INTO filters (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
     args,
   });
+  // eerste scan (basislijn) meteen doen, zodat de gebruiker niet op de cron hoeft te wachten
+  await scanDue(db, { userId: user.id, timeBudgetMs: 8000, limit: 3 }).catch(e => console.error('Eerste scan mislukt', e));
   return Response.json({ id });
 }

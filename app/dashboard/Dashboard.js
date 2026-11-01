@@ -54,7 +54,9 @@ export default function Dashboard({ email, intervals }) {
   const [notifOk, setNotifOk] = useState(true);
 
   const load = useCallback(async () => {
-    const [f, h] = await Promise.all([api('/api/filters'), api('/api/hits')]);
+    // eerst hits: die aanroep scant ook de filters die aan de beurt zijn, daarna de bijgewerkte filterstatus
+    const h = await api('/api/hits');
+    const f = await api('/api/filters');
     setFilters(f.filters);
     setMax(f.max);
     setHits(h.hits);
