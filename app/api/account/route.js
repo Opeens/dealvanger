@@ -8,9 +8,20 @@ export async function GET() {
   const user = await getUser();
   if (!user) return Response.json({ error: 'Niet ingelogd' }, { status: 401 });
   const db = await getDb();
-  const [u] = rows(await db.execute({ sql: 'SELECT email, username, password_hash FROM users WHERE id = ?', args: [user.id] }));
+  const [u] = rows(await db.execute({ sql: 'SELECT email, username, password_hash, blacklist FROM users WHERE id = ?', args: [user.id] }));
   if (!u) return Response.json({ error: 'Niet ingelogd' }, { status: 401 });
-  return Response.json({ email: u.email, username: u.username, hasPassword: !!u.password_hash });
+  return Response.json({ email: u.email, username: u.username, hasPassword: !!u.password_hash, blacklist: u.blacklist || '' });
+}
+
+// Algemene blacklist: woorden die voor alle filters van deze gebruiker worden overgeslagen
+export async function PATCH(req) {
+  const user = await getUser();
+  if (!user) return Response.json({ error: 'Niet ingelogd' }, { status: 401 });
+  const b = await req.json().catch(() => ({}));
+  const blacklist = String(b.blacklist ?? '').split(',').map(w => w.trim()).filter(Boolean).join(', ').slice(0, 1000);
+  const db = await getDb();
+  await db.execute({ sql: 'UPDATE users SET blacklist = ? WHERE id = ?', args: [blacklist, user.id] });
+  return Response.json({ ok: true, blacklist });
 }
 
 // Gebruikersnaam instellen (eenmalig) en/of wachtwoord instellen of wijzigen

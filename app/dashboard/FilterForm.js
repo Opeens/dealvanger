@@ -73,8 +73,9 @@ export default function FilterForm({ initial, editing, intervals, onSave, onClos
           <p className="fieldset-title">Verfijnen</p>
           <label htmlFor="rw">Titel moet bevatten <span className="muted">(komma-gescheiden)</span></label>
           <input id="rw" type="text" value={form.require_words} onChange={set('require_words')} placeholder="bijv. 128gb" />
-          <label htmlFor="ew">Uitsluiten <span className="muted">(komma-gescheiden)</span></label>
+          <label htmlFor="ew">Blacklist voor dit filter <span className="muted">(komma-gescheiden)</span></label>
           <input id="ew" type="text" value={form.exclude_words} onChange={set('exclude_words')} placeholder="hoesje, kapot, defect, gezocht" />
+          <p className="hint">Staat een van deze woorden in de titel of beschrijving, dan wordt de advertentie overgeslagen. Je algemene blacklist (Instellingen) geldt daarnaast altijd.</p>
           <label className="check"><input type="checkbox" checked={form.skip_ads} onChange={set('skip_ads')} /> Betaalde topadvertenties overslaan</label>
         </div>
 

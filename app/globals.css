@@ -55,7 +55,9 @@ label .muted { font-weight: 400; }
 input[type=text], input[type=number], input[type=email], input[type=password], select {
   width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 7px; background: var(--panel); color: var(--text); font: inherit; transition: border-color .12s, box-shadow .12s;
 }
-input::placeholder { color: var(--faint); }
+.textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 7px; background: var(--panel); color: var(--text); font: inherit; resize: vertical; min-height: 72px; }
+.textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+input::placeholder, .textarea::placeholder { color: var(--faint); }
 input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
