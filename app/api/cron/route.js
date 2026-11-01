@@ -19,7 +19,16 @@ export async function GET(req) {
   if (secret ? given !== secret : process.env.NODE_ENV === 'production') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  try {
+    return await runScan();
+  } catch (e) {
+    // alleen zichtbaar met de juiste CRON_SECRET, handig om problemen te vinden
+    console.error('Cron mislukt', e);
+    return Response.json({ error: e.message }, { status: 500 });
+  }
+}
 
+async function runScan() {
   const db = await getDb();
   const started = Date.now();
   const due = rows(await db.execute({
