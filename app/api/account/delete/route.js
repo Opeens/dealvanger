@@ -14,6 +14,7 @@ export async function POST() {
     { sql: 'DELETE FROM hits WHERE user_id = ?', args: [user.id] },
     { sql: 'DELETE FROM filters WHERE user_id = ?', args: [user.id] },
     { sql: 'DELETE FROM login_tokens WHERE email = ?', args: [user.email] },
+    { sql: 'DELETE FROM login_attempts WHERE attempt_key = ?', args: [user.email] },
     { sql: 'DELETE FROM users WHERE id = ?', args: [user.id] },
   ], 'write');
   const res = NextResponse.redirect(`${SITE_URL}/`, 303);

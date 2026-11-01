@@ -77,6 +77,7 @@ async function runScan() {
       { sql: 'DELETE FROM seen WHERE seen_at < ?', args: [now - 30 * 86400000] },
       { sql: 'DELETE FROM hits WHERE found_at < ?', args: [now - 14 * 86400000] },
       { sql: 'DELETE FROM login_tokens WHERE expires_at < ?', args: [now] },
+      { sql: 'DELETE FROM login_attempts WHERE at < ?', args: [now - 86400000] },
     ], 'write');
   }
 

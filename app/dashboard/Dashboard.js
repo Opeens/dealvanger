@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatPrice } from '@/lib/marktplaats';
+import AccountSettings from './AccountSettings';
 
 const EMPTY = {
   query: '', name: '', min_price: '', max_price: '', resale_price: '', min_profit: '', postcode: '', distance_km: '',
@@ -205,6 +206,7 @@ export default function Dashboard({ email, intervals }) {
               );
             })}
           </div>
+          <AccountSettings />
           <button className="link-btn" onClick={deleteAccount}>Account verwijderen</button>
         </div>
       </aside>

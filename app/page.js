@@ -5,7 +5,7 @@ const FAQ = [
   ['Wat is een Marktplaats sniper?', `Een sniper houdt je zoekopdrachten continu in de gaten en laat je direct weten wanneer er een nieuwe advertentie verschijnt. Zo ben je de eerste die reageert op een scherp geprijsd aanbod.`],
   ['Hoe snel zie ik nieuwe advertenties?', `${SITE_NAME} scant je filters zo vaak als elke minuut. Nieuwe advertenties verschijnen meteen in je dashboard.`],
   ['Wanneer krijg ik een e-mail?', 'Je stelt per filter in voor hoeveel je het product kunt doorverkopen en hoeveel winst je minimaal wilt. Zodra een nieuwe advertentie die winst oplevert, krijg je een mail met een directe link.'],
-  ['Wat kost het?', `${SITE_NAME} is gratis. Je hebt alleen een e-mailadres nodig.`],
+  ['Wat kost het?', `${SITE_NAME} is gratis. Maak een account met een gebruikersnaam, wachtwoord en e-mailadres.`],
   ['Is dit een dienst van Marktplaats?', `Nee. ${SITE_NAME} is een onafhankelijke dienst en is niet verbonden aan Marktplaats of Adevinta.`],
 ];
 
@@ -23,7 +23,7 @@ export default function Home() {
       <section className="hero">
         <h1>Zie nieuwe Marktplaats-koopjes als eerste</h1>
         <p>Stel zoekfilters in met prijs, afstand en winstmarge. {SITE_NAME} scant elke minuut en mailt je zodra er een deal binnenkomt. Zo koop je goedkoop in en verkoop je met winst door.</p>
-        <Link href="/login" className="btn-primary">Gratis beginnen</Link>
+        <Link href="/login?mode=register" className="btn-primary">Gratis beginnen</Link>
       </section>
 
       <section className="section">
@@ -50,7 +50,7 @@ export default function Home() {
       </section>
 
       <section className="hero" style={{ paddingTop: 24 }}>
-        <Link href="/login" className="btn-primary">Maak gratis je eerste filter</Link>
+        <Link href="/login?mode=register" className="btn-primary">Maak gratis je eerste filter</Link>
       </section>
     </main>
   );

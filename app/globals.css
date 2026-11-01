@@ -29,14 +29,22 @@ a { color: var(--accent); }
 .page-title { font-size: 22px; margin: 0 0 8px; }
 .error { color: var(--bad); }
 .success { background: var(--good-soft); color: var(--good); padding: 10px 12px; border-radius: 8px; }
-.login-form { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.login-form { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.login-form label { margin-bottom: 0; }
+.login-form .primary { margin-top: 8px; padding: 9px 12px; }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; margin-top: 12px; }
+.tabs button { border: none; background: transparent; color: var(--muted); font-weight: 600; }
+.tabs button.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.account-settings { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
+.account-settings summary { cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.pill { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--new-soft); color: var(--new); }
 .prose { max-width: 720px; margin: 32px auto; padding: 0 16px; }
 .prose h1 { font-size: 26px; }
 .prose h2 { font-size: 18px; margin-top: 28px; }
 
 h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
 label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 3px; }
-input[type=text], input[type=number], input[type=email], select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--text); font: inherit; }
+input[type=text], input[type=number], input[type=email], input[type=password], select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--text); font: inherit; }
 input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .check { display: flex; align-items: center; gap: 7px; margin: 7px 0 0; color: var(--text); font-size: 13px; }
