@@ -4,6 +4,7 @@ import { parseFilter, FILTER_FIELDS } from '@/lib/filters';
 import { scanDue } from '@/lib/scanner';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 // Volledige wijziging: zoekcriteria kunnen veranderd zijn, dus basislijn opnieuw zetten
 export async function PUT(req, { params }) {

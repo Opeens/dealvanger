@@ -4,15 +4,18 @@ import { getUser } from '@/lib/session';
 import { parseFilter, FILTER_FIELDS } from '@/lib/filters';
 import { MAX_FILTERS_PER_USER } from '@/lib/config';
 import { scanDue } from '@/lib/scanner';
+import { aiAvailable } from '@/lib/aiCheck';
 
 export const dynamic = 'force-dynamic';
+// de eerste scan kan met AI-controle wat langer duren
+export const maxDuration = 60;
 
 export async function GET() {
   const user = await getUser();
   if (!user) return Response.json({ error: 'Niet ingelogd' }, { status: 401 });
   const db = await getDb();
   const filters = rows(await db.execute({ sql: 'SELECT * FROM filters WHERE user_id = ? ORDER BY created_at', args: [user.id] }));
-  return Response.json({ filters, max: MAX_FILTERS_PER_USER, now: Date.now() });
+  return Response.json({ filters, max: MAX_FILTERS_PER_USER, now: Date.now(), ai: aiAvailable() });
 }
 
 export async function POST(req) {

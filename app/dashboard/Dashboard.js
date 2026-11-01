@@ -61,6 +61,7 @@ function filterSummary(f, { category = true } = {}) {
 export default function Dashboard({ email, intervals }) {
   const [filters, setFilters] = useState([]);
   const [max, setMax] = useState(5);
+  const [aiReady, setAiReady] = useState(false);
   const [hits, setHits] = useState([]);
   const [account, setAccount] = useState({ email, username: null, hasPassword: true });
   const [active, setActive] = useState('all');
@@ -78,11 +79,12 @@ export default function Dashboard({ email, intervals }) {
     const f = await api('/api/filters');
     setFilters(f.filters);
     setMax(f.max);
+    setAiReady(!!f.ai);
     setHits(h.hits);
     setLoaded(true);
     const top = h.hits[0]?.id ?? 0;
     if (lastHitId.current !== null) {
-      const incoming = h.hits.filter(x => x.id > lastHitId.current && x.is_new);
+      const incoming = h.hits.filter(x => x.id > lastHitId.current && x.is_new && x.ai_verdict !== 0);
       if (incoming.length) {
         setFreshIds(prev => new Set([...prev, ...incoming.map(x => x.id)]));
         if (incoming.some(x => x.is_deal)) beep();
@@ -141,10 +143,14 @@ export default function Dashboard({ email, intervals }) {
     window.location.href = '/';
   }
 
+  // door de AI afgekeurde advertenties tellen nergens mee en staan alleen onder "Afgekeurd"
+  const accepted = hits.filter(h => h.ai_verdict !== 0);
   const counts = {};
-  hits.forEach(h => { counts[h.filter_id] = (counts[h.filter_id] || 0) + 1; });
-  const scoped = current ? hits.filter(h => h.filter_id === current.id) : hits;
-  const shown = view === 'deals' ? scoped.filter(h => h.is_deal) : scoped;
+  accepted.forEach(h => { counts[h.filter_id] = (counts[h.filter_id] || 0) + 1; });
+  const inScope = h => !current || h.filter_id === current.id;
+  const scoped = accepted.filter(inScope);
+  const rejected = hits.filter(h => h.ai_verdict === 0 && inScope(h));
+  const shown = view === 'deals' ? scoped.filter(h => h.is_deal) : view === 'rejected' ? rejected : scoped;
   const deals = scoped.filter(h => h.is_deal);
   const bestProfit = deals.reduce((m, h) => Math.max(m, h.profit ?? 0), 0);
   const lastScan = (current ? [current] : filters).reduce((m, f) => Math.max(m, f.last_scan_at || 0), 0);
@@ -156,7 +162,7 @@ export default function Dashboard({ email, intervals }) {
         <div className="sb-label"><span>Filters</span><span>{filters.length}/{max}</span></div>
         <button className={'sb-item' + (active === 'all' ? ' active' : '')} onClick={() => setActive('all')}>
           <span className="sb-text"><span className="sb-name">Alle resultaten</span></span>
-          <span className="count">{hits.length}</span>
+          <span className="count">{accepted.length}</span>
         </button>
         {filters.map(f => (
           <button key={f.id} className={'sb-item' + (active === f.id ? ' active' : '')} onClick={() => setActive(f.id)}>
@@ -228,6 +234,9 @@ export default function Dashboard({ email, intervals }) {
           <div className="seg">
             <button className={view === 'all' ? 'active' : ''} onClick={() => setView('all')}>Alles</button>
             <button className={view === 'deals' ? 'active' : ''} onClick={() => setView('deals')}>Deals</button>
+            {(rejected.length > 0 || view === 'rejected') && (
+              <button className={view === 'rejected' ? 'active' : ''} onClick={() => setView('rejected')}>Afgekeurd ({rejected.length})</button>
+            )}
           </div>
           <span className="spacer" />
           {!notifOk && (
@@ -244,6 +253,7 @@ export default function Dashboard({ email, intervals }) {
               {!loaded ? 'Laden…'
                 : filters.length === 0 ? <><strong>Nog geen filters</strong>Maak een filter aan om nieuwe advertenties te volgen.</>
                 : view === 'deals' ? <><strong>Nog geen deals</strong>Advertenties die binnen je winstmarge vallen verschijnen hier.</>
+                : view === 'rejected' ? <><strong>Niets afgekeurd</strong>Advertenties die de AI-controle afkeurt verschijnen hier.</>
                 : <><strong>Nog geen resultaten</strong>Nieuwe advertenties verschijnen hier zodra ze geplaatst worden.</>}
             </div>
           )}
@@ -260,6 +270,7 @@ export default function Dashboard({ email, intervals }) {
                   {!current && <span>{h.filter_name}</span>}
                   <span>{ago(h.found_at, now)}</span>
                 </div>
+                {h.ai_reason && <div className={'item-ai' + (h.ai_verdict === 0 ? ' rejected' : '')}>AI: {h.ai_reason}</div>}
               </div>
               <div className="item-price">
                 <div className="price">{formatPrice(h)}</div>
@@ -280,6 +291,7 @@ export default function Dashboard({ email, intervals }) {
                   initial={filterToForm(drawer.filter)}
                   editing={!!drawer.filter}
                   intervals={intervals}
+                  aiReady={aiReady}
                   onSave={form => saveFilter(form, drawer.filter?.id)}
                   onClose={() => setDrawer(null)}
                 />

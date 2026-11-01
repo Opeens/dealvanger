@@ -8,6 +8,7 @@ export const EMPTY_FILTER = {
   query: '', name: '', min_price: '', max_price: '', resale_price: '', min_profit: '', postcode: '', distance_km: '',
   require_words: '', exclude_words: '', interval_min: 1, title_only: true, skip_ads: true, include_no_price: false, email_deals: true,
   l1_category_id: '', l2_category_id: '', category_label: '', attributes: [], ranges: [],
+  ai_check: false, ai_description: '',
 };
 
 // databaserij -> formulierwaarden
@@ -22,7 +23,7 @@ export function filterToForm(f) {
   return form;
 }
 
-export default function FilterForm({ initial, editing, intervals, onSave, onClose }) {
+export default function FilterForm({ initial, editing, intervals, aiReady, onSave, onClose }) {
   const [form, setForm] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -58,6 +59,26 @@ export default function FilterForm({ initial, editing, intervals, onSave, onClos
         </div>
 
         <MarktplaatsFilters form={form} setForm={setForm} />
+
+        <div className="fieldset">
+          <p className="fieldset-title">AI-controle</p>
+          <p className="fieldset-desc">AI bekijkt bij elke nieuwe advertentie de foto, titel en beschrijving, en keurt alles af wat niet echt is wat je zoekt.</p>
+          <label className="check"><input type="checkbox" checked={form.ai_check} onChange={set('ai_check')} disabled={!aiReady} /> Advertenties controleren met AI</label>
+          {!aiReady && <p className="hint">Nog niet beschikbaar: er is geen Anthropic API-sleutel ingesteld op de server.</p>}
+          {form.ai_check && <>
+            <label htmlFor="aid">Wat zoek je precies?</label>
+            <textarea
+              id="aid"
+              className="textarea"
+              rows={3}
+              maxLength={500}
+              value={form.ai_description}
+              onChange={set('ai_description')}
+              placeholder="bijv. Een complete SM06 uitlaat (einddemper) voor een 172cc scooter. Geen hitteschild, bocht of losse onderdelen."
+            />
+            <p className="hint">Hoe specifieker, hoe beter. Afgekeurde advertenties vind je terug onder &ldquo;Afgekeurd&rdquo;.</p>
+          </>}
+        </div>
 
         <div className="fieldset">
           <p className="fieldset-title">Prijs</p>

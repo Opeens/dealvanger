@@ -3,6 +3,7 @@ import { getUser } from '@/lib/session';
 import { scanDue } from '@/lib/scanner';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 export async function GET() {
   const user = await getUser();
