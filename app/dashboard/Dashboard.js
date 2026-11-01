@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatPrice } from '@/lib/marktplaats';
 import AccountSettings from './AccountSettings';
-import FilterForm, { EMPTY_FILTER } from './FilterForm';
+import FilterForm, { filterToForm } from './FilterForm';
+import { parseJson } from '@/lib/marktplaats';
 
 function ago(ms, now) {
   if (!ms) return '–';
@@ -45,8 +46,11 @@ function beep() {
   } catch {}
 }
 
-function filterSummary(f) {
+function filterSummary(f, { category = true } = {}) {
   const bits = [];
+  if (category && f.category_label) bits.push(f.category_label.split(' › ').pop());
+  const extra = parseJson(f.attributes).length + parseJson(f.ranges).length;
+  if (extra) bits.push(`${extra} kenmerk${extra === 1 ? '' : 'en'}`);
   if (f.min_price != null || f.max_price != null) bits.push(`€${f.min_price ?? 0}–${f.max_price ?? '∞'}`);
   if (f.postcode && f.distance_km) bits.push(`${f.distance_km} km`);
   if (f.resale_price != null) bits.push(`verkoop €${f.resale_price}`);
@@ -190,7 +194,7 @@ export default function Dashboard({ email, intervals }) {
             <h1>{current ? current.name : 'Alle resultaten'}</h1>
             <p className="main-sub">
               {current
-                ? <>Zoekt op &ldquo;{current.query}&rdquo; · {filterSummary(current)}</>
+                ? <>{current.query ? <>Zoekt op &ldquo;{current.query}&rdquo; · </> : null}{current.category_label ? `${current.category_label} · ` : ''}{filterSummary(current, { category: false })}</>
                 : `${filters.filter(f => f.enabled).length} van ${filters.length} filters actief`}
             </p>
           </div>
@@ -273,7 +277,7 @@ export default function Dashboard({ email, intervals }) {
             {drawer.type === 'filter'
               ? <FilterForm
                   key={drawer.filter?.id || 'new'}
-                  initial={drawer.filter ? Object.fromEntries(Object.keys(EMPTY_FILTER).map(k => [k, typeof EMPTY_FILTER[k] === 'boolean' ? !!drawer.filter[k] : (drawer.filter[k] ?? '')])) : EMPTY_FILTER}
+                  initial={filterToForm(drawer.filter)}
                   editing={!!drawer.filter}
                   intervals={intervals}
                   onSave={form => saveFilter(form, drawer.filter?.id)}

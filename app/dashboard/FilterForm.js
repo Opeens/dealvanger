@@ -1,11 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import { parseJson } from '@/lib/marktplaats';
+import MarktplaatsFilters from './MarktplaatsFilters';
 
 export const EMPTY_FILTER = {
   query: '', name: '', min_price: '', max_price: '', resale_price: '', min_profit: '', postcode: '', distance_km: '',
   require_words: '', exclude_words: '', interval_min: 1, title_only: true, skip_ads: true, include_no_price: false, email_deals: true,
+  l1_category_id: '', l2_category_id: '', category_label: '', attributes: [], ranges: [],
 };
+
+// databaserij -> formulierwaarden
+export function filterToForm(f) {
+  if (!f) return EMPTY_FILTER;
+  const form = {};
+  for (const [k, empty] of Object.entries(EMPTY_FILTER)) {
+    if (typeof empty === 'boolean') form[k] = !!f[k];
+    else if (Array.isArray(empty)) form[k] = parseJson(f[k]);
+    else form[k] = f[k] ?? '';
+  }
+  return form;
+}
 
 export default function FilterForm({ initial, editing, intervals, onSave, onClose }) {
   const [form, setForm] = useState(initial);
@@ -35,11 +50,14 @@ export default function FilterForm({ initial, editing, intervals, onSave, onClos
         <div className="fieldset">
           <p className="fieldset-title">Zoekopdracht</p>
           <label htmlFor="q">Zoekterm</label>
-          <input id="q" type="text" value={form.query} onChange={set('query')} placeholder="bijv. iphone 15 pro" required maxLength={100} autoFocus />
+          <input id="q" type="text" value={form.query} onChange={set('query')} placeholder="bijv. iphone 15 pro" required={!form.l1_category_id} maxLength={100} autoFocus />
+          {form.l1_category_id && !form.query && <p className="hint">Zonder zoekterm volg je alle nieuwe advertenties in de gekozen categorie.</p>}
           <label htmlFor="n">Naam <span className="muted">(optioneel)</span></label>
           <input id="n" type="text" value={form.name} onChange={set('name')} placeholder="Zoals het in je overzicht staat" maxLength={60} />
           <label className="check"><input type="checkbox" checked={form.title_only} onChange={set('title_only')} /> Alleen in de titel zoeken</label>
         </div>
+
+        <MarktplaatsFilters form={form} setForm={setForm} />
 
         <div className="fieldset">
           <p className="fieldset-title">Prijs</p>
