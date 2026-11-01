@@ -1,19 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-export default function AccountSettings() {
-  const [account, setAccount] = useState(null);
+export default function AccountSettings({ account, onSaved, onClose, onDelete }) {
   const [f, setF] = useState({ username: '', currentPassword: '', password: '', password2: '' });
   const [msg, setMsg] = useState({ text: '', ok: false });
   const [busy, setBusy] = useState(false);
   const set = k => e => setF(v => ({ ...v, [k]: e.target.value }));
-
-  useEffect(() => {
-    fetch('/api/account').then(r => r.ok ? r.json() : null).then(setAccount).catch(() => {});
-  }, []);
-
-  if (!account) return null;
 
   async function submit(e) {
     e.preventDefault();
@@ -27,36 +20,54 @@ export default function AccountSettings() {
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) { setMsg({ text: data.error || 'Er ging iets mis.', ok: false }); return; }
-    setAccount(a => ({ ...a, username: data.username, hasPassword: true }));
+    onSaved({ username: data.username, hasPassword: true });
     setF({ username: '', currentPassword: '', password: '', password2: '' });
-    setMsg({ text: 'Opgeslagen. Je kunt nu inloggen met je gebruikersnaam en wachtwoord.', ok: true });
+    setMsg({ text: 'Opgeslagen.', ok: true });
   }
 
   return (
-    <details className="account-settings" open={!account.hasPassword}>
-      <summary>
-        Account{account.username ? `: ${account.username}` : ''}
-        {!account.hasPassword && <span className="pill">stel wachtwoord in</span>}
-      </summary>
-      <p className="hint">E-mail voor meldingen: {account.email}</p>
-      <form onSubmit={submit} autoComplete="off">
-        {!account.username && <>
+    <form onSubmit={submit} autoComplete="off" style={{ display: 'contents' }}>
+      <div className="drawer-head">
+        <h2>Instellingen</h2>
+        <button type="button" className="icon-btn" onClick={onClose} aria-label="Sluiten">×</button>
+      </div>
+
+      <div className="drawer-body">
+        <div className="fieldset">
+          <p className="fieldset-title">Account</p>
           <label>Gebruikersnaam</label>
-          <input type="text" required minLength={3} maxLength={20} value={f.username} onChange={set('username')} autoComplete="username" placeholder="3-20 tekens" />
-        </>}
-        {account.hasPassword && <>
-          <label>Huidig wachtwoord</label>
-          <input type="password" required value={f.currentPassword} onChange={set('currentPassword')} autoComplete="current-password" />
-        </>}
-        <label>{account.hasPassword ? 'Nieuw wachtwoord' : 'Wachtwoord'}</label>
-        <input type="password" required minLength={8} value={f.password} onChange={set('password')} autoComplete="new-password" placeholder="minstens 8 tekens" />
-        <label>Herhaal wachtwoord</label>
-        <input type="password" required minLength={8} value={f.password2} onChange={set('password2')} autoComplete="new-password" />
-        <div className="form-actions">
-          <button className="primary" disabled={busy}>{account.hasPassword ? 'Wachtwoord wijzigen' : 'Opslaan'}</button>
+          {account.username
+            ? <input type="text" value={account.username} disabled />
+            : <input type="text" required minLength={3} maxLength={20} value={f.username} onChange={set('username')} autoComplete="username" placeholder="3-20 tekens" />}
+          <label>E-mailadres <span className="muted">(voor deal-mails)</span></label>
+          <input type="email" value={account.email || ''} disabled />
         </div>
-        {msg.text && <p className={msg.ok ? 'hint' : 'error'}>{msg.text}</p>}
-      </form>
-    </details>
+
+        <div className="fieldset">
+          <p className="fieldset-title">{account.hasPassword ? 'Wachtwoord wijzigen' : 'Wachtwoord instellen'}</p>
+          {!account.hasPassword && <p className="fieldset-desc">Stel een wachtwoord in om voortaan met je gebruikersnaam in te loggen.</p>}
+          {account.hasPassword && <>
+            <label>Huidig wachtwoord</label>
+            <input type="password" required value={f.currentPassword} onChange={set('currentPassword')} autoComplete="current-password" />
+          </>}
+          <label>Nieuw wachtwoord</label>
+          <input type="password" required minLength={8} value={f.password} onChange={set('password')} autoComplete="new-password" placeholder="Minstens 8 tekens" />
+          <label>Herhaal wachtwoord</label>
+          <input type="password" required minLength={8} value={f.password2} onChange={set('password2')} autoComplete="new-password" />
+          {msg.text && <p className={msg.ok ? 'hint' : 'error'}>{msg.text}</p>}
+        </div>
+
+        <div className="fieldset">
+          <p className="fieldset-title">Account verwijderen</p>
+          <p className="fieldset-desc">Verwijdert je account, filters en resultaten definitief.</p>
+          <button type="button" className="btn-danger" style={{ marginTop: 10 }} onClick={onDelete}>Account verwijderen</button>
+        </div>
+      </div>
+
+      <div className="drawer-foot">
+        <button type="button" onClick={onClose}>Sluiten</button>
+        <button className="primary" disabled={busy}>{busy ? 'Opslaan…' : 'Opslaan'}</button>
+      </div>
+    </form>
   );
 }
