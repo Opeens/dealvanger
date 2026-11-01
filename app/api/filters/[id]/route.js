@@ -16,7 +16,7 @@ export async function PUT(req, { params }) {
 
   const db = await getDb();
   const res = await db.execute({
-    sql: `UPDATE filters SET ${FILTER_FIELDS.map(k => `${k} = ?`).join(', ')}, baseline_done = 0, next_scan_at = 0, last_error = NULL
+    sql: `UPDATE filters SET ${FILTER_FIELDS.map(k => `${k} = ?`).join(', ')}, baseline_done = 0, next_scan_at = 0, last_error = NULL, max_item_num = NULL
           WHERE id = ? AND user_id = ?`,
     args: [...FILTER_FIELDS.map(k => value[k]), id, user.id],
   });
