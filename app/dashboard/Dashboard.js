@@ -200,7 +200,9 @@ export default function Dashboard({ email, intervals }) {
                   {status}
                   <div className="filter-btns">
                     <button className="small" onClick={() => act(f, 'toggle')}>{f.enabled ? 'Pauzeer' : 'Hervat'}</button>
-                    <button className="small" onClick={() => act(f, 'mail')}>{f.email_deals ? '✉ Mail aan' : '✉ Mail uit'}</button>
+                    <button className={'small toggle' + (f.email_deals ? ' on' : '')} onClick={() => act(f, 'mail')} title={f.email_deals ? 'Klik om deal-mails uit te zetten' : 'Klik om deal-mails aan te zetten'}>
+                      {f.email_deals ? '✉ Deal-mail: AAN' : '✉ Deal-mail: UIT'}
+                    </button>
                     <button className="small" onClick={() => edit(f)}>Bewerk</button>
                     <button className="small danger" onClick={() => act(f, 'delete')}>Verwijder</button>
                   </div>
