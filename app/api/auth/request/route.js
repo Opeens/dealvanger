@@ -1,7 +1,8 @@
 import { randomBytes, createHash } from 'node:crypto';
 import { getDb, rows } from '@/lib/db';
-import { sendMail, escapeHtml } from '@/lib/mailer';
-import { SITE_NAME, SITE_URL } from '@/lib/config';
+import { sendMail } from '@/lib/mailer';
+import { loginEmail } from '@/lib/emailTemplates';
+import { SITE_URL } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,17 +32,7 @@ export async function POST(req) {
   });
 
   const link = `${SITE_URL}/login/verify?token=${token}`;
-  await sendMail({
-    to: email,
-    subject: `Inloggen bij ${SITE_NAME}`,
-    text: `Klik op de link om in te loggen bij ${SITE_NAME}:\n\n${link}\n\nDe link is 30 minuten geldig. Heb je dit niet aangevraagd? Dan kun je deze mail negeren.`,
-    html: `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5;max-width:480px">
-      <h2 style="margin:0 0 12px">Inloggen bij ${escapeHtml(SITE_NAME)}</h2>
-      <p>Klik op de knop om in te loggen. De link is 30 minuten geldig.</p>
-      <p><a href="${link}" style="display:inline-block;background:#0b66e4;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">Inloggen</a></p>
-      <p style="color:#6b7280;font-size:13px">Heb je dit niet aangevraagd? Dan kun je deze mail negeren.</p>
-    </div>`,
-  });
+  await sendMail({ to: email, ...loginEmail(link) });
 
   return Response.json({ ok: true });
 }
