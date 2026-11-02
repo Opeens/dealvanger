@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatPrice } from '@/lib/marktplaats';
 import AccountSettings from './AccountSettings';
+import ImportFilters from './ImportFilters';
 import FilterForm, { filterToForm } from './FilterForm';
 import { parseJson } from '@/lib/marktplaats';
 
@@ -162,6 +163,19 @@ export default function Dashboard({ email, intervals }) {
     await load();
   }
 
+  async function importFilters(list) {
+    let done = 0;
+    try {
+      for (const form of list) { await api('/api/filters', 'POST', form); done++; }
+    } catch (err) {
+      await load().catch(() => {});
+      throw new Error(`${done} van ${list.length} filters toegevoegd. Daarna ging het mis: ${err.message}`);
+    }
+    setDrawer(null);
+    setActive('all');
+    await load();
+  }
+
   async function act(f, action) {
     if (action === 'delete' && !confirm(`Filter "${f.name}" verwijderen? De gevonden resultaten worden ook verwijderd.`)) return;
     if (action === 'delete') { await api(`/api/filters/${f.id}`, 'DELETE'); setActive('all'); }
@@ -216,6 +230,7 @@ export default function Dashboard({ email, intervals }) {
         <button className="primary sb-new" disabled={filters.length >= max} onClick={() => setDrawer({ type: 'filter', filter: null })}>
           Nieuw filter
         </button>
+        <button className="text-btn sb-import" onClick={() => setDrawer({ type: 'import' })}>Filters importeren of delen</button>
         {filters.length >= max && <p className="hint" style={{ padding: '0 4px' }}>Maximum van {max} filters bereikt.</p>}
 
         <div className="sb-foot">
@@ -335,6 +350,8 @@ export default function Dashboard({ email, intervals }) {
                   onSave={form => saveFilter(form, drawer.filter?.id)}
                   onClose={() => setDrawer(null)}
                 />
+              : drawer.type === 'import'
+              ? <ImportFilters filters={filters} room={Math.max(0, max - filters.length)} onImport={importFilters} onClose={() => setDrawer(null)} />
               : <AccountSettings account={account} onSaved={a => setAccount(x => ({ ...x, ...a }))} onClose={() => setDrawer(null)} onDelete={deleteAccount} />}
           </div>
         </div>
