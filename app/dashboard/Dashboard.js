@@ -26,7 +26,7 @@ function agoShort(ms, now) {
 const eur = n => '€ ' + Math.round(n).toLocaleString('nl-NL');
 
 async function api(path, method = 'GET', body) {
-  const res = await fetch(path, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  const res = await fetch(path, { method, cache: 'no-store', headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) { window.location.href = '/login'; throw new Error('Niet ingelogd'); }
   if (!res.ok) throw new Error(data.error || 'Er ging iets mis');
@@ -71,12 +71,39 @@ export default function Dashboard({ email, intervals }) {
   const [loaded, setLoaded] = useState(false);
   const [freshIds, setFreshIds] = useState(new Set());
   const [notifOk, setNotifOk] = useState(true);
+  const [offline, setOffline] = useState(false);
   const lastHitId = useRef(null);
+  // verschil tussen de klok van de server en die van dit apparaat; een verkeerd ingestelde
+  // computerklok liet "Laatste scan" anders steeds X min geleden zien
+  const clockOffset = useRef(0);
+  const loading = useRef(false);
+  const lastOk = useRef(0);
 
   const load = useCallback(async () => {
+    // niet stapelen: een trage of hangende aanroep mag geen oudere data over nieuwere heen zetten
+    if (loading.current) return;
+    loading.current = true;
+    try {
+      await loadOnce();
+      lastOk.current = Date.now();
+      setOffline(false);
+    } catch (e) {
+      // pas na een minuut zonder geslaagde update melden, één mislukte poging is normaal
+      if (Date.now() - lastOk.current > 60000) setOffline(true);
+      throw e;
+    } finally {
+      loading.current = false;
+    }
+  }, []);
+
+  const loadOnce = async () => {
     // eerst hits: die aanroep scant ook de filters die aan de beurt zijn, daarna de bijgewerkte filterstatus
     const h = await api('/api/hits');
     const f = await api('/api/filters');
+    if (f.now) {
+      clockOffset.current = f.now - Date.now();
+      setNow(Date.now() + clockOffset.current);
+    }
     setFilters(f.filters);
     setMax(f.max);
     setAiReady(!!f.ai);
@@ -97,17 +124,29 @@ export default function Dashboard({ email, intervals }) {
       }
     }
     lastHitId.current = Math.max(lastHitId.current ?? 0, top);
-  }, []);
+  };
 
   useEffect(() => {
     load().catch(() => {});
     api('/api/account').then(setAccount).catch(() => {});
     const t1 = setInterval(() => load().catch(() => {}), 20000);
-    const t2 = setInterval(() => setNow(Date.now()), 1000);
+    const t2 = setInterval(() => setNow(Date.now() + clockOffset.current), 1000);
+    // browsers remmen of bevriezen timers in achtergrondtabbladen en na slaapstand;
+    // zodra het tabblad weer zichtbaar is of de verbinding terug is meteen verversen
+    const refresh = () => { if (document.visibilityState === 'visible') load().catch(() => {}); };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    window.addEventListener('online', refresh);
     setNotifOk(!('Notification' in window) || Notification.permission === 'granted');
     const onKey = e => { if (e.key === 'Escape') setDrawer(null); };
     window.addEventListener('keydown', onKey);
-    return () => { clearInterval(t1); clearInterval(t2); window.removeEventListener('keydown', onKey); };
+    return () => {
+      clearInterval(t1); clearInterval(t2);
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('online', refresh);
+    };
   }, [load]);
 
   const current = filters.find(f => f.id === active) || null;
@@ -223,6 +262,7 @@ export default function Dashboard({ email, intervals }) {
           <div className="stat"><div className="stat-label">Laatste scan</div><div className="stat-val">{lastScan ? <>{agoShort(lastScan, now)}<span className="stat-unit"> geleden</span></> : '–'}</div></div>
         </div>
 
+        {offline && <div className="notice err">Geen verbinding met de server, de gegevens hieronder zijn mogelijk niet actueel. We blijven het proberen.</div>}
         {current?.last_error && <div className="notice err">Scannen lukt niet: {current.last_error}</div>}
         {current && !current.last_error && current.enabled && !current.baseline_done && <div className="notice">Eerste scan wordt uitgevoerd…</div>}
         {current && !current.enabled && <div className="notice">Dit filter is gepauzeerd en scant niet.</div>}
