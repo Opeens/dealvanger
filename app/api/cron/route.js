@@ -15,7 +15,7 @@ export async function GET(req) {
   try {
     const db = await getDb();
     // cron-job.org wacht max. 30s op antwoord
-    const result = await scanDue(db, { timeBudgetMs: 25000 });
+    const result = await scanDue(db, { timeBudgetMs: 25000, source: 'cron' });
 
     // af en toe opruimen
     if (Math.random() < 0.02) {

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { getDb, rows } from '@/lib/db';
+import { getDb, getMeta, rows } from '@/lib/db';
 import { getUser } from '@/lib/session';
 import { parseFilter, FILTER_FIELDS } from '@/lib/filters';
-import { MAX_FILTERS_PER_USER } from '@/lib/config';
+import { maxFiltersFor } from '@/lib/config';
 import { scanDue } from '@/lib/scanner';
 import { aiAvailable } from '@/lib/aiCheck';
 
@@ -15,7 +15,12 @@ export async function GET() {
   if (!user) return Response.json({ error: 'Niet ingelogd' }, { status: 401 });
   const db = await getDb();
   const filters = rows(await db.execute({ sql: 'SELECT * FROM filters WHERE user_id = ? ORDER BY created_at', args: [user.id] }));
-  return Response.json({ filters, max: MAX_FILTERS_PER_USER, now: Date.now(), ai: aiAvailable() });
+  const meta = await getMeta(db, ['mp_blocked_until']);
+  const blockedUntil = Number(meta.mp_blocked_until || 0);
+  return Response.json({
+    filters, max: maxFiltersFor(user), now: Date.now(), ai: aiAvailable(),
+    blockedUntil: blockedUntil > Date.now() ? blockedUntil : null,
+  });
 }
 
 export async function POST(req) {
@@ -26,8 +31,9 @@ export async function POST(req) {
 
   const db = await getDb();
   const [{ n }] = rows(await db.execute({ sql: 'SELECT COUNT(*) AS n FROM filters WHERE user_id = ?', args: [user.id] }));
-  if (n >= MAX_FILTERS_PER_USER) {
-    return Response.json({ error: `Je kunt maximaal ${MAX_FILTERS_PER_USER} filters hebben.` }, { status: 400 });
+  const max = maxFiltersFor(user);
+  if (n >= max) {
+    return Response.json({ error: `Je kunt maximaal ${max} filters hebben.` }, { status: 400 });
   }
 
   const id = randomUUID();

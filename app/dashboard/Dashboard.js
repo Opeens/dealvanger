@@ -73,6 +73,7 @@ export default function Dashboard({ email, intervals }) {
   const [freshIds, setFreshIds] = useState(new Set());
   const [notifOk, setNotifOk] = useState(true);
   const [offline, setOffline] = useState(false);
+  const [blockedUntil, setBlockedUntil] = useState(null);
   const lastHitId = useRef(null);
   // verschil tussen de klok van de server en die van dit apparaat; een verkeerd ingestelde
   // computerklok liet "Laatste scan" anders steeds X min geleden zien
@@ -107,6 +108,7 @@ export default function Dashboard({ email, intervals }) {
     }
     setFilters(f.filters);
     setMax(f.max);
+    setBlockedUntil(f.blockedUntil || null);
     setAiReady(!!f.ai);
     setHits(h.hits);
     setLoaded(true);
@@ -278,6 +280,7 @@ export default function Dashboard({ email, intervals }) {
         </div>
 
         {offline && <div className="notice err">Geen verbinding met de server, de gegevens hieronder zijn mogelijk niet actueel. We blijven het proberen.</div>}
+        {blockedUntil && <div className="notice err">Marktplaats remt ons af. Om een blokkade te voorkomen is het scannen gepauzeerd tot {new Date(blockedUntil).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}. Daarna gaat het vanzelf verder.</div>}
         {current?.last_error && <div className="notice err">Scannen lukt niet: {current.last_error}</div>}
         {current && !current.last_error && current.enabled && !current.baseline_done && <div className="notice">Eerste scan wordt uitgevoerd…</div>}
         {current && !current.enabled && <div className="notice">Dit filter is gepauzeerd en scant niet.</div>}
