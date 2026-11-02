@@ -20,6 +20,10 @@ en alleen deals mailt. Communicatie met de eigenaar is in het Nederlands.
   (geen mails), daarna alleen nieuwe advertenties.
 - Echt nieuw vs. omhoog geplaatst: advertentienummers `m\d+` lopen op (~400k/dag). Per filter wordt
   `max_item_num` bewaard; alleen nummers > max − `NEW_ID_TOLERANCE` (20000) tellen als nieuw.
+- Blokkade (403/429): alle scans pauzeren globaal (10/20/40/60 min, tabel `meta`: `mp_blocked_until`,
+  `mp_block_level`). Dashboard-scan (`source: 'dashboard'`) slaat over als de cron < 90 s geleden draaide.
+- Filterlimiet: `MAX_FILTERS_PER_USER` (5), eigenaar(s) in `OWNER_EMAILS` krijgen `OWNER_MAX_FILTERS` (25).
+- Filters importeren/delen als JSON via de zijbalk (`app/dashboard/ImportFilters.js`).
 - `lib/marktplaats.js`: onofficiële API `https://www.marktplaats.nl/lrp/api/search` (limit 100, want betaalde
   topadvertenties vullen de eerste plekken; 204 zonder query én categorie).
 
