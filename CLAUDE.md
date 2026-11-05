@@ -24,6 +24,9 @@ en alleen deals mailt. Communicatie met de eigenaar is in het Nederlands.
   `mp_block_level`). Dashboard-scan (`source: 'dashboard'`) slaat over als de cron < 90 s geleden draaide.
 - Filterlimiet: `MAX_FILTERS_PER_USER` (5), eigenaar(s) in `OWNER_EMAILS` krijgen `OWNER_MAX_FILTERS` (25).
 - Filters importeren/delen als JSON via de zijbalk (`app/dashboard/ImportFilters.js`).
+- cron-job.org draait elke minuut (sinds 5 nov 2026). Dashboard waarschuwt als `last_cron_at` > 5 min oud is.
+- Mail: testmail-knop in Instellingen (`/api/account/testmail`); mislukte deal-mails staan in `meta.last_mail_error`.
+  Eerste scan van een filter = basislijn: hits met `is_new = 0` tonen als "Al online", geen mail.
 - `lib/marktplaats.js`: onofficiële API `https://www.marktplaats.nl/lrp/api/search` (limit 100, want betaalde
   topadvertenties vullen de eerste plekken; 204 zonder query én categorie).
 
@@ -34,7 +37,6 @@ en alleen deals mailt. Communicatie met de eigenaar is in het Nederlands.
 - `LAUNCHEN.md`: deploy-handleiding.
 
 ## Openstaand
-- cron-job.org-account activeren en job elke minuut laten draaien.
 - AI-controle aanzetten op het filter "sm06 uitlaat".
 - Google Search Console: `NEXT_PUBLIC_GOOGLE_VERIFICATION` invullen en sitemap indienen.
 
