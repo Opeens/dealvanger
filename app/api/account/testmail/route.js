@@ -1,5 +1,5 @@
 import { getUser } from '@/lib/session';
-import { sendMail } from '@/lib/mailer';
+import { sendMail, mailSetup } from '@/lib/mailer';
 import { dealEmail } from '@/lib/emailTemplates';
 import { SITE_URL } from '@/lib/config';
 
@@ -22,8 +22,8 @@ export async function POST() {
     city: 'Elp', url: SITE_URL + '/dashboard', image: null, distance_km: null, ai_reason: 'Dit is een testmail, geen echte advertentie.',
   }];
   try {
-    await sendMail({ to: user.email, ...dealEmail(f, deals) });
-    return Response.json({ ok: true });
+    const info = await sendMail({ to: user.email, ...dealEmail(f, deals) });
+    return Response.json({ ok: true, ...mailSetup(), response: info?.response || null });
   } catch (e) {
     return Response.json({ error: `Versturen mislukt: ${e.message}` }, { status: 500 });
   }

@@ -19,7 +19,7 @@ export default function AccountSettings({ account, onSaved, onClose, onDelete })
     const data = await res.json().catch(() => ({}));
     setTesting(false);
     setTestMsg(res.ok
-      ? { text: `Testmail verstuurd naar ${account.email}. Kijk ook in je spam of het tabblad Reclame.`, ok: true }
+      ? { text: `Testmail verstuurd naar ${account.email}${data.host ? ` via ${data.host}, afzender ${data.from}` : ''}. Kijk ook in je spam, Reclame en (bij Gmail) "Alle e-mail".`, ok: true }
       : { text: data.error || 'Er ging iets mis.', ok: false });
   }
 
