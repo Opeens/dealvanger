@@ -15,11 +15,13 @@ export async function GET() {
   if (!user) return Response.json({ error: 'Niet ingelogd' }, { status: 401 });
   const db = await getDb();
   const filters = rows(await db.execute({ sql: 'SELECT * FROM filters WHERE user_id = ? ORDER BY created_at', args: [user.id] }));
-  const meta = await getMeta(db, ['mp_blocked_until']);
+  const meta = await getMeta(db, ['mp_blocked_until', 'last_cron_at']);
   const blockedUntil = Number(meta.mp_blocked_until || 0);
   return Response.json({
     filters, max: maxFiltersFor(user), now: Date.now(), ai: aiAvailable(),
     blockedUntil: blockedUntil > Date.now() ? blockedUntil : null,
+    // wanneer de externe cron (cron-job.org) voor het laatst scande; 0 = nog nooit
+    lastCronAt: Number(meta.last_cron_at || 0),
   });
 }
 

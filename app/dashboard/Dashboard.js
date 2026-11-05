@@ -74,6 +74,7 @@ export default function Dashboard({ email, intervals }) {
   const [notifOk, setNotifOk] = useState(true);
   const [offline, setOffline] = useState(false);
   const [blockedUntil, setBlockedUntil] = useState(null);
+  const [lastCronAt, setLastCronAt] = useState(null);
   const lastHitId = useRef(null);
   // verschil tussen de klok van de server en die van dit apparaat; een verkeerd ingestelde
   // computerklok liet "Laatste scan" anders steeds X min geleden zien
@@ -109,6 +110,7 @@ export default function Dashboard({ email, intervals }) {
     setFilters(f.filters);
     setMax(f.max);
     setBlockedUntil(f.blockedUntil || null);
+    setLastCronAt(f.lastCronAt ?? null);
     setAiReady(!!f.ai);
     setHits(h.hits);
     setLoaded(true);
@@ -280,6 +282,13 @@ export default function Dashboard({ email, intervals }) {
         </div>
 
         {offline && <div className="notice err">Geen verbinding met de server, de gegevens hieronder zijn mogelijk niet actueel. We blijven het proberen.</div>}
+        {lastCronAt !== null && filters.some(f => f.enabled) && now - lastCronAt > 5 * 60000 && (
+          <div className="notice err">
+            Automatisch scannen staat uit: {lastCronAt ? <>de laatste automatische scan was {ago(lastCronAt, now)}</> : 'er is nog nooit automatisch gescand'}.
+            Er wordt nu alleen gescand terwijl dit dashboard openstaat, dus je mist deals en oude advertenties lijken nieuw.
+            Controleer de job op cron-job.org.
+          </div>
+        )}
         {blockedUntil && <div className="notice err">Marktplaats remt ons af. Om een blokkade te voorkomen is het scannen gepauzeerd tot {new Date(blockedUntil).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}. Daarna gaat het vanzelf verder.</div>}
         {current?.last_error && <div className="notice err">Scannen lukt niet: {current.last_error}</div>}
         {current && !current.last_error && current.enabled && !current.baseline_done && <div className="notice">Eerste scan wordt uitgevoerd…</div>}
