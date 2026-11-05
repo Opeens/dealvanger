@@ -75,6 +75,7 @@ export default function Dashboard({ email, intervals }) {
   const [offline, setOffline] = useState(false);
   const [blockedUntil, setBlockedUntil] = useState(null);
   const [lastCronAt, setLastCronAt] = useState(null);
+  const [mailError, setMailError] = useState(null);
   const lastHitId = useRef(null);
   // verschil tussen de klok van de server en die van dit apparaat; een verkeerd ingestelde
   // computerklok liet "Laatste scan" anders steeds X min geleden zien
@@ -111,6 +112,7 @@ export default function Dashboard({ email, intervals }) {
     setMax(f.max);
     setBlockedUntil(f.blockedUntil || null);
     setLastCronAt(f.lastCronAt ?? null);
+    setMailError(f.mailError || null);
     setAiReady(!!f.ai);
     setHits(h.hits);
     setLoaded(true);
@@ -207,8 +209,11 @@ export default function Dashboard({ email, intervals }) {
   const inScope = h => !current || h.filter_id === current.id;
   const scoped = accepted.filter(inScope);
   const rejected = hits.filter(h => h.ai_verdict === 0 && inScope(h));
-  const shown = view === 'deals' ? scoped.filter(h => h.is_deal) : view === 'rejected' ? rejected : scoped;
-  const deals = scoped.filter(h => h.is_deal);
+  // advertenties uit de eerste scan van een filter (is_new = 0) stonden er al; daarvoor komt geen mail
+  // en ze tellen niet als deal, anders lijkt het alsof er tientallen deals gemist zijn
+  const isDeal = h => h.is_deal && h.is_new;
+  const shown = view === 'deals' ? scoped.filter(isDeal) : view === 'rejected' ? rejected : scoped;
+  const deals = scoped.filter(isDeal);
   const bestProfit = deals.reduce((m, h) => Math.max(m, h.profit ?? 0), 0);
   const lastScan = (current ? [current] : filters).reduce((m, f) => Math.max(m, f.last_scan_at || 0), 0);
   const initial = (account.username || account.email || '?').slice(0, 1).toUpperCase();
@@ -289,6 +294,12 @@ export default function Dashboard({ email, intervals }) {
             Controleer de job op cron-job.org.
           </div>
         )}
+        {mailError && (
+          <div className="notice err">
+            Deal-mails komen niet aan: versturen mislukte {ago(mailError.at, now)} ({mailError.message}).
+            Controleer de SMTP-instellingen in Vercel en stuur een testmail via Instellingen.
+          </div>
+        )}
         {blockedUntil && <div className="notice err">Marktplaats remt ons af. Om een blokkade te voorkomen is het scannen gepauzeerd tot {new Date(blockedUntil).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}. Daarna gaat het vanzelf verder.</div>}
         {current?.last_error && <div className="notice err">Scannen lukt niet: {current.last_error}</div>}
         {current && !current.last_error && current.enabled && !current.baseline_done && <div className="notice">Eerste scan wordt uitgevoerd…</div>}
@@ -325,13 +336,15 @@ export default function Dashboard({ email, intervals }) {
             </div>
           )}
           {shown.map(h => (
-            <a key={h.id} className={'item' + (h.is_deal ? ' deal' : '') + (freshIds.has(h.id) ? ' fresh' : '')} href={h.url} target="_blank" rel="noopener noreferrer">
+            <a key={h.id} className={'item' + (isDeal(h) ? ' deal' : '') + (freshIds.has(h.id) ? ' fresh' : '')} href={h.url} target="_blank" rel="noopener noreferrer">
               <div className="item-img" style={{ backgroundImage: h.image ? `url("${h.image}")` : undefined }} />
               <div className="item-main">
                 <div className="item-title">{h.title}</div>
                 <div className="item-meta">
                   <span>
-                    {h.is_deal ? <span className="tag">Deal</span> : h.is_new ? <span className="tag quiet">Nieuw</span> : null}
+                    {!h.is_new
+                      ? <span className="tag quiet" title="Stond al op Marktplaats toen het filter werd aangemaakt; hiervoor komt geen mail">Al online{h.is_deal ? ' · deal' : ''}</span>
+                      : h.is_deal ? <span className="tag">Deal</span> : <span className="tag quiet">Nieuw</span>}
                     {h.city}{h.distance_km != null ? ` (${h.distance_km} km)` : ''}
                   </span>
                   {!current && <span>{h.filter_name}</span>}

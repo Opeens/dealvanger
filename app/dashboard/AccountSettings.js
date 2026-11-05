@@ -8,7 +8,20 @@ export default function AccountSettings({ account, onSaved, onClose, onDelete })
   const [busy, setBusy] = useState(false);
   const [blacklist, setBlacklist] = useState(account.blacklist || '');
   const [blMsg, setBlMsg] = useState({ text: '', ok: false });
+  const [testMsg, setTestMsg] = useState({ text: '', ok: false });
+  const [testing, setTesting] = useState(false);
   const set = k => e => setF(v => ({ ...v, [k]: e.target.value }));
+
+  async function sendTestMail() {
+    setTesting(true);
+    setTestMsg({ text: '', ok: false });
+    const res = await fetch('/api/account/testmail', { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    setTesting(false);
+    setTestMsg(res.ok
+      ? { text: `Testmail verstuurd naar ${account.email}. Kijk ook in je spam of het tabblad Reclame.`, ok: true }
+      : { text: data.error || 'Er ging iets mis.', ok: false });
+  }
 
   async function saveBlacklist() {
     setBlMsg({ text: '', ok: false });
@@ -84,6 +97,13 @@ export default function AccountSettings({ account, onSaved, onClose, onDelete })
           <label>Herhaal wachtwoord</label>
           <input type="password" required minLength={8} value={f.password2} onChange={set('password2')} autoComplete="new-password" />
           {msg.text && <p className={msg.ok ? 'hint' : 'error'}>{msg.text}</p>}
+        </div>
+
+        <div className="fieldset">
+          <p className="fieldset-title">Deal-mails testen</p>
+          <p className="fieldset-desc">Stuurt een voorbeeld-dealmail naar {account.email}, zodat je ziet of mails aankomen.</p>
+          <button type="button" style={{ marginTop: 10 }} onClick={sendTestMail} disabled={testing}>{testing ? 'Versturen…' : 'Testmail sturen'}</button>
+          {testMsg.text && <p className={testMsg.ok ? 'hint' : 'error'}>{testMsg.text}</p>}
         </div>
 
         <div className="fieldset">

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getDb, getMeta, rows } from '@/lib/db';
 import { getUser } from '@/lib/session';
 import { parseFilter, FILTER_FIELDS } from '@/lib/filters';
-import { maxFiltersFor } from '@/lib/config';
+import { maxFiltersFor, isOwner } from '@/lib/config';
 import { scanDue } from '@/lib/scanner';
 import { aiAvailable } from '@/lib/aiCheck';
 
@@ -15,13 +15,18 @@ export async function GET() {
   if (!user) return Response.json({ error: 'Niet ingelogd' }, { status: 401 });
   const db = await getDb();
   const filters = rows(await db.execute({ sql: 'SELECT * FROM filters WHERE user_id = ? ORDER BY created_at', args: [user.id] }));
-  const meta = await getMeta(db, ['mp_blocked_until', 'last_cron_at']);
+  const meta = await getMeta(db, ['mp_blocked_until', 'last_cron_at', 'last_mail_error', 'last_mail_ok_at']);
+  let mailError = null;
+  try { mailError = meta.last_mail_error ? JSON.parse(meta.last_mail_error) : null; } catch {}
+  // alleen tonen aan de eigenaar, als de fout van het laatste etmaal is en er daarna geen mail is gelukt
+  if (!isOwner(user) || !mailError || mailError.at < Date.now() - 86400000 || Number(meta.last_mail_ok_at || 0) > mailError.at) mailError = null;
   const blockedUntil = Number(meta.mp_blocked_until || 0);
   return Response.json({
     filters, max: maxFiltersFor(user), now: Date.now(), ai: aiAvailable(),
     blockedUntil: blockedUntil > Date.now() ? blockedUntil : null,
     // wanneer de externe cron (cron-job.org) voor het laatst scande; 0 = nog nooit
     lastCronAt: Number(meta.last_cron_at || 0),
+    mailError,
   });
 }
 
