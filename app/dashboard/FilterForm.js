@@ -8,7 +8,7 @@ export const EMPTY_FILTER = {
   query: '', name: '', min_price: '', max_price: '', resale_price: '', min_profit: '', postcode: '', distance_km: '',
   require_words: '', exclude_words: '', interval_min: 1, title_only: true, skip_ads: true, include_no_price: false, email_deals: true,
   l1_category_id: '', l2_category_id: '', category_label: '', attributes: [], ranges: [],
-  ai_check: false, ai_description: '',
+  ai_check: false, ai_description: '', free_only: false,
 };
 
 // databaserij -> formulierwaarden
@@ -86,7 +86,10 @@ export default function FilterForm({ initial, editing, intervals, aiReady, onSav
             <div><label htmlFor="pmin">Minimaal (€)</label><input id="pmin" type="number" min="0" value={form.min_price} onChange={set('min_price')} /></div>
             <div><label htmlFor="pmax">Maximaal (€)</label><input id="pmax" type="number" min="0" value={form.max_price} onChange={set('max_price')} /></div>
           </div>
-          <label className="check"><input type="checkbox" checked={form.include_no_price} onChange={set('include_no_price')} /> Ook advertenties zonder vaste prijs</label>
+          <label className="check"><input type="checkbox" checked={form.free_only} onChange={set('free_only')} /> Alleen gratis spullen</label>
+          {form.free_only
+            ? <p className="hint">Alleen advertenties met de prijs &ldquo;Gratis&rdquo;. Lokkertjes worden overgeslagen: € 0-prijzen, topadvertenties, bedrijven en reclame zoals gratis offerte, bezorging, verhuur of inkoop. Elke echt gratis advertentie telt als deal. Zet de AI-controle aan om ook de lastige gevallen eruit te halen.</p>
+            : <label className="check"><input type="checkbox" checked={form.include_no_price} onChange={set('include_no_price')} /> Ook advertenties zonder vaste prijs</label>}
         </div>
 
         <div className="fieldset">
