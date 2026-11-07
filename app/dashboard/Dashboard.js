@@ -56,7 +56,7 @@ function filterSummary(f, { category = true } = {}) {
   if (f.postcode && f.distance_km) bits.push(`${f.distance_km} km`);
   if (f.resale_price != null) bits.push(`verkoop €${f.resale_price}`);
   bits.push(f.interval_min === 1 ? 'elke min.' : `elke ${f.interval_min} min.`);
-  return bits.join(' · ');
+  return bits.join(', ');
 }
 
 export default function Dashboard({ email, intervals }) {
@@ -263,7 +263,7 @@ export default function Dashboard({ email, intervals }) {
             <h1>{current ? current.name : 'Alle resultaten'}</h1>
             <p className="main-sub">
               {current
-                ? <>{current.query ? <>Zoekt op &ldquo;{current.query}&rdquo; · </> : null}{current.category_label ? `${current.category_label} · ` : ''}{filterSummary(current, { category: false })}</>
+                ? <>{current.query ? <>Zoekt op &ldquo;{current.query}&rdquo;, </> : null}{current.category_label ? `${current.category_label}, ` : ''}{filterSummary(current, { category: false })}</>
                 : `${filters.filter(f => f.enabled).length} van ${filters.length} filters actief`}
             </p>
           </div>
@@ -343,7 +343,7 @@ export default function Dashboard({ email, intervals }) {
                 <div className="item-meta">
                   <span>
                     {!h.is_new
-                      ? <span className="tag quiet" title="Stond al op Marktplaats toen het filter werd aangemaakt; hiervoor komt geen mail">Al online{h.is_deal ? ' · deal' : ''}</span>
+                      ? <span className="tag quiet" title="Stond al op Marktplaats toen het filter werd aangemaakt; hiervoor komt geen mail">Al online{h.is_deal ? ', deal' : ''}</span>
                       : h.is_deal ? <span className="tag">Deal</span> : <span className="tag quiet">Nieuw</span>}
                     {h.city}{h.distance_km != null ? ` (${h.distance_km} km)` : ''}
                   </span>
