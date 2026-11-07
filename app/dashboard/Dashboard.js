@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatPrice } from '@/lib/marktplaats';
 import AccountSettings from './AccountSettings';
 import ImportFilters from './ImportFilters';
+import './dashboard.css';
 import FilterForm, { filterToForm } from './FilterForm';
 import { parseJson } from '@/lib/marktplaats';
 
@@ -221,27 +222,29 @@ export default function Dashboard({ email, intervals }) {
   return (
     <div className="app">
       <aside className="sb">
-        <div className="sb-label"><span>Filters</span><span>{filters.length}/{max}</span></div>
-        <button className={'sb-item' + (active === 'all' ? ' active' : '')} onClick={() => setActive('all')}>
-          <span className="sb-text"><span className="sb-name">Alle resultaten</span></span>
-          <span className="count">{accepted.length}</span>
-        </button>
-        {filters.map(f => (
-          <button key={f.id} className={'sb-item' + (active === f.id ? ' active' : '')} onClick={() => setActive(f.id)}>
-            <span className={'status' + (f.last_error ? ' err' : f.enabled ? ' on' : '')} title={f.last_error ? 'Fout' : f.enabled ? 'Actief' : 'Gepauzeerd'} />
-            <span className="sb-text">
-              <span className="sb-name">{f.name}</span>
-              <span className="sb-sub">{filterSummary(f)}</span>
-            </span>
-            <span className="count">{counts[f.id] || 0}</span>
-          </button>
-        ))}
+        <div className="sb-label"><span>Filters</span><span className="num">{filters.length}/{max}</span></div>
         <button className="primary sb-new" disabled={filters.length >= max} onClick={() => setDrawer({ type: 'filter', filter: null })}>
           Nieuw filter
         </button>
         <button className="text-btn sb-import" onClick={() => setDrawer({ type: 'import' })}>Filters importeren of delen</button>
-        {filters.length >= max && <p className="hint" style={{ padding: '0 4px' }}>Maximum van {max} filters bereikt.</p>}
-
+        {filters.length >= max && <p className="hint sb-hint">Maximum van {max} filters bereikt.</p>}
+        <div className="sb-divider" />
+        <nav className="sb-list" aria-label="Filters">
+        <button type="button" aria-current={active === 'all' ? 'true' : undefined} className={'sb-item' + (active === 'all' ? ' active' : '')} onClick={() => setActive('all')}>
+          <span className="sb-text"><span className="sb-name">Alle resultaten</span></span>
+          <span className="count">{accepted.length}</span>
+        </button>
+        {filters.map(f => (
+          <button type="button" key={f.id} aria-current={active === f.id ? 'true' : undefined} className={'sb-item' + (active === f.id ? ' active' : '')} onClick={() => setActive(f.id)}>
+            <span className={'status' + (f.last_error ? ' err' : f.enabled ? ' on' : '')} title={f.last_error ? 'Fout' : f.enabled ? 'Actief' : 'Gepauzeerd'} />
+            <span className="sb-text">
+              <span className="sb-name">{f.name}</span>
+              <span className={'sb-sub' + (f.last_error ? ' is-err' : '')}>{f.last_error ? 'Fout, ' : !f.enabled ? 'Gepauzeerd, ' : ''}{filterSummary(f)}</span>
+            </span>
+            <span className="count">{counts[f.id] || 0}</span>
+          </button>
+        ))}
+        </nav>
         <div className="sb-foot">
           <div className="sb-user">
             <span className="avatar">{initial}</span>
@@ -279,12 +282,12 @@ export default function Dashboard({ email, intervals }) {
           )}
         </div>
 
-        <div className="stats">
-          <div className="stat"><div className="stat-label">Resultaten</div><div className="stat-val">{scoped.length}</div></div>
-          <div className="stat"><div className="stat-label">Deals</div><div className="stat-val accent">{deals.length}</div></div>
-          <div className="stat"><div className="stat-label">Hoogste winst</div><div className="stat-val">{bestProfit ? eur(bestProfit) : '–'}</div></div>
-          <div className="stat"><div className="stat-label">Laatste scan</div><div className="stat-val">{lastScan ? <>{agoShort(lastScan, now)}<span className="stat-unit"> geleden</span></> : '–'}</div></div>
-        </div>
+        <dl className="stat-row">
+          <div><dt>Resultaten</dt><dd className="num">{scoped.length}</dd></div>
+          <div><dt>Deals</dt><dd className="num is-accent">{deals.length}</dd></div>
+          <div><dt>Hoogste winst</dt><dd className="num">{bestProfit ? eur(bestProfit) : '–'}</dd></div>
+          <div><dt>Laatste scan</dt><dd className="num">{lastScan ? <>{agoShort(lastScan, now)}<span className="stat-unit"> geleden</span></> : '–'}</dd></div>
+        </dl>
 
         {offline && <div className="notice err">Geen verbinding met de server, de gegevens hieronder zijn mogelijk niet actueel. We blijven het proberen.</div>}
         {lastCronAt !== null && filters.some(f => f.enabled) && now - lastCronAt > 5 * 60000 && (
@@ -325,38 +328,46 @@ export default function Dashboard({ email, intervals }) {
           {hits.length > 0 && <button className="text-btn danger" onClick={clearHits}>Overzicht leegmaken</button>}
         </div>
 
-        <div className="list">
-          {shown.length === 0 && (
+        <div className={'feed' + (current ? '' : ' with-filter')}>
+          {loaded && shown.length > 0 && (
+            <div className="feed-head" aria-hidden="true">
+              <span /><span>Advertentie</span>{!current && <span>Filter</span>}<span>Plaats</span><span>Gevonden</span><span className="r">Prijs</span><span className="r">Winst</span>
+            </div>
+          )}
+          {!loaded && [0, 1, 2, 3].map(i => (
+            <div key={i} className="feed-row is-skeleton" aria-hidden="true"><span className="feed-img" /><span className="sk sk-title" /><span className="sk sk-cell" /></div>
+          ))}
+          {loaded && shown.length === 0 && (
             <div className="empty">
-              {!loaded ? 'Laden…'
-                : filters.length === 0 ? <><strong>Nog geen filters</strong>Maak een filter aan om nieuwe advertenties te volgen.</>
+              {filters.length === 0 ? <><strong>Nog geen filters</strong>Maak een filter aan om nieuwe advertenties te volgen.</>
                 : view === 'deals' ? <><strong>Nog geen deals</strong>Advertenties die binnen je winstmarge vallen verschijnen hier.</>
                 : view === 'rejected' ? <><strong>Niets afgekeurd</strong>Advertenties die de AI-controle afkeurt verschijnen hier.</>
                 : <><strong>Nog geen resultaten</strong>Nieuwe advertenties verschijnen hier zodra ze geplaatst worden.</>}
             </div>
           )}
           {shown.map(h => (
-            <a key={h.id} className={'item' + (isDeal(h) ? ' deal' : '') + (freshIds.has(h.id) ? ' fresh' : '')} href={h.url} target="_blank" rel="noopener noreferrer">
-              <div className="item-img" style={{ backgroundImage: h.image ? `url("${h.image}")` : undefined }} />
-              <div className="item-main">
-                <div className="item-title">{h.title}</div>
-                <div className="item-meta">
-                  <span>
-                    {!h.is_new
-                      ? <span className="tag quiet" title="Stond al op Marktplaats toen het filter werd aangemaakt; hiervoor komt geen mail">Al online{h.is_deal ? ', deal' : ''}</span>
-                      : h.is_deal ? <span className="tag">Deal</span> : <span className="tag quiet">Nieuw</span>}
-                    {h.city}{h.distance_km != null ? ` (${h.distance_km} km)` : ''}
-                  </span>
-                  {!current && <span>{h.filter_name}</span>}
-                  <span>{ago(h.found_at, now)}</span>
-                </div>
-                {h.ai_reason && <div className={'item-ai' + (h.ai_verdict === 0 ? ' rejected' : '')}>AI: {h.ai_reason}</div>}
-              </div>
-              <div className="item-price">
-                <div className="price">{formatPrice(h)}</div>
-                {h.price_type === 'MIN_BID' && h.price_cents > 0 && <div className="price-note">bieden vanaf</div>}
-                {h.profit != null && <div className={'profit ' + (h.profit >= 0 ? 'pos' : 'neg')}>{h.profit >= 0 ? '+' : '−'}{eur(Math.abs(h.profit))}</div>}
-              </div>
+            <a key={h.id} className={'feed-row' + (isDeal(h) ? ' deal' : '') + (freshIds.has(h.id) ? ' fresh' : '') + (h.ai_verdict === 0 ? ' is-rejected' : '')} href={h.url} target="_blank" rel="noopener noreferrer">
+              <span className="feed-img" style={{ backgroundImage: h.image ? `url("${h.image}")` : undefined }} />
+              <span className="feed-main">
+                <span className="feed-title">{h.title}</span>
+                <span className="feed-sub">
+                  {!h.is_new
+                    ? <span className="tag quiet" title="Stond al op Marktplaats toen het filter werd aangemaakt; hiervoor komt geen mail">Al online{h.is_deal ? ', deal' : ''}</span>
+                    : h.ai_verdict === 0 ? <span className="tag quiet">Afgekeurd</span>
+                    : h.is_deal ? <span className="tag">Deal</span> : <span className="tag quiet">Nieuw</span>}
+                  {h.ai_reason && <span className={'feed-ai' + (h.ai_verdict === 0 ? ' rejected' : '')}>AI: {h.ai_reason}</span>}
+                </span>
+              </span>
+              {!current && <span className="feed-cell feed-filter">{h.filter_name}</span>}
+              <span className="feed-cell feed-city">{h.city}{h.distance_km != null ? ` (${h.distance_km} km)` : ''}</span>
+              <span className="feed-cell feed-time">{ago(h.found_at, now)}</span>
+              <span className="feed-cell r num feed-price">
+                {formatPrice(h)}
+                {h.price_type === 'MIN_BID' && h.price_cents > 0 && <span className="price-note">bieden vanaf</span>}
+              </span>
+              <span className={'feed-cell r num feed-profit' + (h.profit != null && h.profit >= 0 ? ' pos' : '')}>
+                {h.profit != null ? <>{h.profit >= 0 ? '+' : '−'}{eur(Math.abs(h.profit))}</> : '–'}
+              </span>
             </a>
           ))}
         </div>
